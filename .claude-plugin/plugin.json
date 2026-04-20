@@ -1,0 +1,26 @@
+{
+  "name": "ios-clean-architecture",
+  "version": "1.0.0",
+  "description": "Clean Architecture template for SwiftUI + SPM apps on Swift 6.2 with default main-actor isolation, @Observable view models, protocol-first modules, service-locator DI, and Swift Testing.",
+  "author": {
+    "name": "Abdelrahman Mohamed",
+    "email": "obada.semary@gmail.com"
+  },
+  "repository": "https://github.com/Obadasemary/ios-clean-architecture-skill",
+  "license": "MIT",
+  "keywords": [
+    "swift",
+    "swift-6",
+    "swiftui",
+    "clean-architecture",
+    "spm",
+    "ios",
+    "observable",
+    "main-actor",
+    "dependency-injection",
+    "swift-testing"
+  ],
+  "skills": [
+    "./skills/ios-clean-architecture"
+  ]
+}
