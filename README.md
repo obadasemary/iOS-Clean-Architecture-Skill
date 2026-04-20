@@ -1,6 +1,6 @@
 # iOS Clean Architecture Agent Skill
 
-An open-source Agent Skill that scaffolds and enforces a modular Clean Architecture for iOS apps built with **SwiftUI** and **Swift Package Manager** on **Swift 6.2** with default main-actor isolation.
+An open-source Agent Skill that scaffolds and enforces a modular **Clean Architecture** for iOS apps built with **SwiftUI** and **Swift Package Manager** on **Swift 6.2** with default main-actor isolation.
 
 ## Quick Start
 
@@ -13,9 +13,17 @@ Add the marketplace and install the plugin inside Claude Code:
 
 Then open your iOS project and ask:
 
-> Use the ios-clean-architecture skill to scaffold a new feature module with View, ViewModel, UseCase, Repository, and DI wiring.
+> Use the `ios-clean-architecture` skill to scaffold a new feature module with View, ViewModel, UseCase, Repository, Builder, and DI wiring.
 
-The skill will set up layered SPM packages, protocol-first cross-module contracts, `@Observable` view models, Builder-based feature instantiation, and Swift Testing doubles — following the patterns documented in `skills/ios-clean-architecture/SKILL.md`.
+The skill sets up layered SPM packages, protocol-first cross-module contracts, `@Observable` view models, Builder-based feature instantiation, and Swift Testing doubles — following the patterns documented in [`skills/ios-clean-architecture/SKILL.md`](skills/ios-clean-architecture/SKILL.md).
+
+## Example Prompts
+
+- "Scaffold a new `CharacterList` feature module following the `ios-clean-architecture` skill."
+- "Migrate `ProfileViewModel` from `ObservableObject` / `@Published` to `@Observable` per the skill's rules."
+- "Add a `FetchOrdersUseCase` and register it in the DIContainer."
+- "Write Swift Testing doubles (`FakeOrdersRepository`, `SpyRouter`) for the new feature."
+- "Audit this file for violations of the skill's DO/DON'T checklist."
 
 ## What The Skill Covers
 
@@ -25,15 +33,17 @@ The skill will set up layered SPM packages, protocol-first cross-module contract
 - **Protocol-first cross-module boundaries** — modules depend on protocols, never on concrete types from other modules
 - **Service-locator DIContainer** — centralized dependency registration and resolution
 - **Builder pattern** — mandatory feature instantiation through dedicated builders, keeping view sites free of construction logic
-- **Swift Testing** — `MockNetworkService`, `FakeFeedUseCase`, `SpyRouter`-style doubles for isolated component verification
+- **Swift Testing** — `Mock*` / `Fake*` / `Spy*` doubles for isolated component verification
 
 ## Dependency Direction
 
 ```
 View  →  ViewModel  →  UseCase  →  Repository  →  NetworkService
+                                        ↓
+                                    Endpoints
 ```
 
-Outer layers depend on inner layers, never the reverse. Views never touch repositories directly, view models never touch `URLSession` directly — every cross-layer call routes through a use case.
+Outer layers depend on inner layers, never the reverse. Views never touch repositories directly; view models never touch `URLSession` directly — every cross-layer call routes through a UseCase.
 
 ## Critical Constraints The Skill Enforces
 
@@ -41,6 +51,9 @@ Outer layers depend on inner layers, never the reverse. Views never touch reposi
 - Avoid force unwrapping except within Builder internals.
 - Never allow ViewModels to call `URLSession` or Repositories directly — route through UseCases.
 - Use `.xcworkspace`, not `.xcodeproj` alone.
+- Cross-module dependencies are always on protocols.
+
+Full DO / DON'T checklist lives in the [SKILL.md](skills/ios-clean-architecture/SKILL.md#critical-rules-do--dont).
 
 ## Installation Options
 
