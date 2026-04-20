@@ -4,11 +4,22 @@ An open-source Agent Skill that scaffolds and enforces a modular **Clean Archite
 
 ## Quick Start
 
-Add the marketplace and install the plugin inside Claude Code:
+Add `extraKnownMarketplaces` and `enabledPlugins` to your project's `.claude.json` (create it at the repo root if it doesn't exist):
 
-```bash
-/plugin marketplace add Obadasemary/ios-clean-architecture-skill
-/plugin install ios-clean-architecture@ios-clean-architecture
+```json
+{
+  "extraKnownMarketplaces": {
+    "ios-clean-architecture": {
+      "source": {
+        "source": "github",
+        "repo": "Obadasemary/ios-clean-architecture-skill"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ios-clean-architecture@ios-clean-architecture": true
+  }
+}
 ```
 
 Then open your iOS project and ask:
@@ -57,27 +68,12 @@ Full DO / DON'T checklist lives in the [SKILL.md](skills/ios-clean-architecture/
 
 ## Installation Options
 
-### Option A: Claude Code Plugin (recommended)
+### Option A: `.claude.json` (recommended)
 
-1. Add the marketplace:
-
-```bash
-/plugin marketplace add Obadasemary/ios-clean-architecture-skill
-```
-
-2. Install the plugin:
-
-```bash
-/plugin install ios-clean-architecture@ios-clean-architecture
-```
-
-To enable for everyone in a repository, add to your project's Claude Code configuration:
+Add the plugin directly to your project's `.claude.json` at the repo root. This is the most reliable method and works regardless of the state of other registered marketplaces.
 
 ```json
 {
-  "enabledPlugins": {
-    "ios-clean-architecture@ios-clean-architecture": true
-  },
   "extraKnownMarketplaces": {
     "ios-clean-architecture": {
       "source": {
@@ -85,11 +81,25 @@ To enable for everyone in a repository, add to your project's Claude Code config
         "repo": "Obadasemary/ios-clean-architecture-skill"
       }
     }
+  },
+  "enabledPlugins": {
+    "ios-clean-architecture@ios-clean-architecture": true
   }
 }
 ```
 
-### Option B: Manual Install
+Commit this file to share the skill across your entire team automatically.
+
+### Option B: CLI install
+
+```bash
+/plugin marketplace add Obadasemary/ios-clean-architecture-skill
+/plugin install ios-clean-architecture@ios-clean-architecture
+```
+
+> **Known issue:** `/plugin install` loads all registered marketplaces before resolving the target plugin. If Anthropic's `claude-plugins-official` marketplace has schema validation errors (a known upstream bug), this command will fail with an unrelated error. Use Option A or Option C in that case.
+
+### Option C: Manual Install
 
 1. Clone this repository.
 2. Copy or symlink `skills/ios-clean-architecture/` into your Claude skills directory.
