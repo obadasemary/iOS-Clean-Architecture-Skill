@@ -22,7 +22,7 @@ Do **not** use this skill for: UIKit-first apps, Combine-heavy pipelines the use
 
 ## Dependency Direction
 
-```
+```text
 View  →  ViewModel  →  UseCase  →  Repository  →  NetworkService
                                         ↓
                                     Endpoints
@@ -34,7 +34,7 @@ Outer layers may import inner layers. Never the reverse. Views do not import Rep
 
 Each responsibility lives in its own SPM package:
 
-```
+```text
 Packages/
   NetworkService/          # URLSession wrapper, request execution
   Endpoints/               # Endpoint definitions per API
