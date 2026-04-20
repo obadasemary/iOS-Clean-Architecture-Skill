@@ -1,6 +1,6 @@
 ---
 name: ios-clean-architecture
-description: Modular Clean Architecture template for iOS apps built with SwiftUI and Swift Package Manager on Swift 6.2 with default main-actor isolation. Use when scaffolding a new iOS feature, organizing a SwiftUI app into layered SPM packages (NetworkService, Endpoints, Repositories, UseCases, DIContainer, feature views), wiring protocol-first cross-module dependencies, introducing Builder-based feature instantiation, migrating ObservableObject code to @Observable, or authoring Swift Testing doubles (MockNetworkService, FakeUseCase, SpyRouter) for isolated verification.
+description: Modular Clean Architecture template for iOS apps using SwiftUI, SPM, and Swift 6.2. Scaffolds layered packages with protocol-first boundaries, `@Observable` view models, Builder-based DI, and Swift Testing doubles.
 ---
 
 # iOS Clean Architecture (SwiftUI + SPM, Swift 6.2)
@@ -14,7 +14,7 @@ Use this skill when the user is:
 - Scaffolding a new SwiftUI feature module and needs layered structure
 - Splitting a monolithic iOS app into multiple SPM packages
 - Migrating from `ObservableObject` / `@Published` to `@Observable`
-- Enabling Swift 6.2 default actor isolation and removing scattered `@MainActor` annotations
+- Enabling Swift 6.2 default actor isolation (`.defaultIsolation(MainActor.self)` per target) to reduce explicit `@MainActor` annotations
 - Wiring dependencies through a service-locator DI container
 - Adding Swift Testing doubles for an isolated view-model / use-case / repository
 
@@ -56,6 +56,8 @@ Cross-module dependencies are always on **protocols**, never concrete types.
 ### Endpoint
 
 ```swift
+import Foundation
+
 // Endpoints/Sources/Endpoints/CharacterEndpoint.swift
 public struct CharacterEndpoint: Sendable {
     public let path: String
@@ -105,11 +107,22 @@ public struct DefaultFetchCharactersUseCase: FetchCharactersUseCase {
 
 ### @Observable ViewModel
 
-`@Observable` replaces `ObservableObject` / `@Published`. Under Swift 6.2 default main-actor isolation, do **not** add `@MainActor` manually — it's implicit.
+`@Observable` replaces `ObservableObject` / `@Published`. Swift 6.2 (SE-0466) lets you opt an entire module into main-actor isolation by adding `.defaultIsolation(MainActor.self)` to each target in `Package.swift`:
+
+```swift
+// Package.swift (per-target opt-in)
+.target(
+    name: "CharacterList",
+    swiftSettings: [.defaultIsolation(MainActor.self)]
+)
+```
+
+With that setting, all types in the target are implicitly `@MainActor` — no manual annotation needed. **Without it, types default to nonisolated** and you must add `@MainActor` explicitly. Prefer explicit `@MainActor` on ViewModels unless you are certain every target in the module has `.defaultIsolation(MainActor.self)` enabled.
 
 ```swift
 // Features/CharacterList/Sources/CharacterList/CharacterListViewModel.swift
 @Observable
+@MainActor
 public final class CharacterListViewModel {
     public private(set) var characters: [Character] = []
     public private(set) var isLoading = false
@@ -156,18 +169,19 @@ public struct CharacterListBuilder {
 
 ```swift
 // DependencyContainer/Sources/DependencyContainer/DIContainer.swift
-public final class DIContainer {
-    private var factories: [ObjectIdentifier: () -> Any] = [:]
+public final class DIContainer: @unchecked Sendable {
+    private let lock = NSLock()
+    private var factories: [ObjectIdentifier: @Sendable () -> Any] = [:]
 
     public init() {}
 
-    public func register<T>(_ type: T.Type, factory: @escaping () -> T) {
-        factories[ObjectIdentifier(type)] = factory
+    public func register<T>(_ type: T.Type, factory: @escaping @Sendable () -> T) {
+        lock.withLock { factories[ObjectIdentifier(type)] = factory }
     }
 
     public func resolve<T>(_ type: T.Type) -> T {
-        guard let factory = factories[ObjectIdentifier(type)],
-              let value = factory() as? T else {
+        let factory = lock.withLock { factories[ObjectIdentifier(type)] }
+        guard let factory, let value = factory() as? T else {
             fatalError("Dependency \(type) not registered")
         }
         return value
@@ -175,7 +189,7 @@ public final class DIContainer {
 }
 ```
 
-Register at app launch:
+Register at app launch (all registrations happen before any async work begins):
 
 ```swift
 let container = DIContainer()
@@ -211,7 +225,7 @@ struct CharacterListViewModelTests {
     }
 }
 
-final class FakeFetchCharactersUseCase: FetchCharactersUseCase {
+final class FakeFetchCharactersUseCase: FetchCharactersUseCase, @unchecked Sendable {
     let result: Result<[Character], Error>
     init(result: Result<[Character], Error>) { self.result = result }
     func execute(page: Int) async throws -> [Character] { try result.get() }
@@ -226,14 +240,15 @@ Test double naming convention:
 ## Critical Rules (DO / DON'T)
 
 **DO**
-- Let Swift 6.2 default isolation apply `@MainActor` implicitly.
+- Add `.defaultIsolation(MainActor.self)` to each SwiftUI feature target in `Package.swift` to get implicit `@MainActor` isolation — then omit the explicit annotation.
+- Add explicit `@MainActor` to ViewModels in targets that have **not** enabled `.defaultIsolation(MainActor.self)`.
 - Make cross-module types `Sendable` when they cross concurrency boundaries.
 - Depend on protocols across modules.
 - Route every network call through a UseCase.
 - Use `.xcworkspace` when the app target consumes local SPM packages.
 
 **DON'T**
-- Write `@MainActor` manually in targets with default isolation enabled.
+- Assume `@MainActor` is implicit without first confirming `.defaultIsolation(MainActor.self)` is set for that target.
 - Force-unwrap outside Builder internals.
 - Let a View import a Repository or NetworkService directly.
 - Let a ViewModel call `URLSession` directly.
@@ -245,7 +260,7 @@ Test double naming convention:
 - Remove `: ObservableObject`, add `@Observable` to the class declaration.
 - Delete every `@Published` — `@Observable` tracks stored properties automatically.
 - In views, replace `@StateObject` / `@ObservedObject` with `@State` / `@Bindable`.
-- Remove any `@MainActor` on the class if the target has default main-actor isolation.
+- Remove explicit `@MainActor` on the class only if the target has `.defaultIsolation(MainActor.self)` enabled; otherwise keep it.
 - Update tests that relied on Combine publishers — read properties directly after `await`.
 
 ## Checklist For A New Feature Module
