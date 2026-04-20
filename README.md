@@ -4,11 +4,10 @@ An open-source Agent Skill that scaffolds and enforces a modular Clean Architect
 
 ## Quick Start
 
-Add the marketplace and install the plugin inside Claude Code:
+Install using [npx skills](https://skills.sh):
 
 ```bash
-/plugin marketplace add Obadasemary/ios-clean-architecture-skill
-/plugin install ios-clean-architecture@ios-clean-architecture
+npx skills add Obadasemary/ios-clean-architecture-skill
 ```
 
 Then open your iOS project and ask:
@@ -44,7 +43,27 @@ Outer layers depend on inner layers, never the reverse. Views never touch reposi
 
 ## Installation Options
 
-### Option A: Claude Code Plugin (recommended)
+### Option A: npx skills (recommended)
+
+Works with Claude Code, Cursor, Copilot, and [40+ other agents](https://skills.sh):
+
+```bash
+npx skills add Obadasemary/ios-clean-architecture-skill
+```
+
+Install globally (available across all projects):
+
+```bash
+npx skills add Obadasemary/ios-clean-architecture-skill -g
+```
+
+Install to a specific agent only:
+
+```bash
+npx skills add Obadasemary/ios-clean-architecture-skill -a claude-code
+```
+
+### Option B: Claude Code Plugin
 
 1. Add the marketplace:
 
@@ -76,11 +95,11 @@ To enable for everyone in a repository, add to your project's Claude Code config
 }
 ```
 
-### Option B: Manual Install
+### Option C: Manual Install
 
 1. Clone this repository.
-2. Copy or symlink `skills/ios-clean-architecture/` into your Claude skills directory.
-3. Ask Claude to use the `ios-clean-architecture` skill.
+2. Copy or symlink `skills/ios-clean-architecture/` into your agent's skills directory.
+3. Ask the agent to use the `ios-clean-architecture` skill.
 
 Useful docs: [Claude Code Agent Skills](https://code.claude.com/en/skills)
 
